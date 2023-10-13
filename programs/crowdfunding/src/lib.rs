@@ -32,6 +32,23 @@ pub mod crowdfunding {
 		**user.to_account_info().try_borrow_mut_lamports()? += amount;
 		Ok(())
 	}
+
+	pub fn donate(ctx: Context<Donate>, amount: u64) -> ProgramResult {
+		let instruction = anchor_lang::solana_program::system_instruction::transfer(
+			&ctx.accounts.user.key(),
+			&ctx.accounts.compaign.key(),
+			amount
+		);
+		let _ = anchor_lang::solana_program::program::invoke(
+			&instruction,
+			&[
+				ctx.accounts.user.to_account_info(),
+			  	ctx.accounts.compaign.to_account_info()
+			]);
+
+		(&mut ctx.accounts.compaign).amount_donated += amount;
+		Ok(())
+	}
 }
 
 #[derive(Accounts)]
@@ -49,6 +66,15 @@ pub struct Withdraw<'info> {
 	pub compaign: Account<'info, Compaign>,
 	#[account(mut)]
 	pub user: Signer<'info>
+}
+
+#[derive(Accounts)]
+pub struct Donate<'info> {
+	#[account(mut)]
+	pub compaign: Account<'info, Compaign>,
+	#[account(mut)]
+	pub user: Signer<'info>,
+	pub system_program: Program<'info, System>
 }
 
 #[account]
